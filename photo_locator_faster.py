@@ -288,7 +288,7 @@ for file in os.listdir(directory_in_bytes):
          image_data = {
              'filename': filename,
              'description': '', #if there is a description use </br> at end
-             'directory': os.path.dirname(os.path.realpath(filename)),
+             'directory': os.path.realpath(directory),
              'longitude': longitude,
              'latitude': latitude,
              'date':coord_dict['date']
