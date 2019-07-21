@@ -78,6 +78,7 @@ header = """<?xml version="1.0" encoding="UTF-8"?>
 	<name>pte pics</name>
 	<open>1</open>
 
+
     <!-- FOR VIDEOS -->
     <StyleMap id="msn_icon">
 		<Pair>
@@ -91,6 +92,9 @@ header = """<?xml version="1.0" encoding="UTF-8"?>
 	</StyleMap>
 
 	<Style id="sn_icon">
+        <LabelStyle>
+            <scale>0</scale>
+        </LabelStyle>
 		<IconStyle>
 			<scale>1.1</scale>
 			<Icon>
@@ -137,6 +141,9 @@ header = """<?xml version="1.0" encoding="UTF-8"?>
     </StyleMap>
 
     <Style id="sn_icon_img">
+        <LabelStyle>
+            <scale>0</scale>
+        </LabelStyle>
         <IconStyle>
             <scale>1.1</scale>
             <Icon>
