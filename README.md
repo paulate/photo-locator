@@ -18,6 +18,4 @@ Open the .kml file in a kml viewer like Google Earth; placemarks show where the 
 your computer's entire memory. :D
 
 ## Known wrongs:
-* I thought movie placemark icons were different than image placemark icons, but they seem to be the same.
-* Fix movies having a name but photos not having a name.
 * Create thumbnail versions of the images to use as placemark icons to fix the memory issue.

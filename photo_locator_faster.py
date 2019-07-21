@@ -37,10 +37,11 @@ def get_coordinates(directory,filename,exiftool): #extract only the gps data fro
         result = exiftool.get_metadata(os.path.join(directory,filename))
         latitude = result.get('Composite:GPSLatitude',0)
         longitude = result.get('Composite:GPSLongitude',0)
+        date = result.get('QuickTime:CreateDate','')
 
         mov_time1 = datetime.datetime.now()
         print("movie processing: ",(mov_time1-mov_time).total_seconds())
-        return (latitude,longitude)
+        return {'coords':(latitude,longitude), 'date':date}
     else:
         #get exif
         image = Image.open(os.path.join(directory,filename))
@@ -48,7 +49,7 @@ def get_coordinates(directory,filename,exiftool): #extract only the gps data fro
         exif = image._getexif()
         if not exif:
             print("No EXIF metadata found found. Skipping ", filename)
-            return (0,0)
+            return {'coords':(0,0), 'date':''}
 
         #get geotagging
         geotagging = {}
@@ -56,13 +57,19 @@ def get_coordinates(directory,filename,exiftool): #extract only the gps data fro
             if tag == 'GPSInfo':
                 if idx not in exif:
                     print("No EXIF geotagging found. Skipping ", filename)
-                    return (0,0)
+                    return {'coords':(0,0), 'date':''}
                 for (key, val) in GPSTAGS.items():
                     if key in exif[idx]:
                         geotagging[val] = exif[idx][key]
+            if tag == 'DateTimeOriginal':
+                if idx not in exif:
+                    print("No EXIF Date found.")
+                    date = ''
+                else:
+                    date = exif[idx]
         img_time = datetime.datetime.now()
-        print("image processing: %s",(img_time-mov_time).total_seconds())
-        return get_coords_from_geotag(geotagging)
+        print("image processing: ",(img_time-mov_time).total_seconds())
+        return {'coords':get_coords_from_geotag(geotagging),'date':date}
 
 #KML stuff
 header = """<?xml version="1.0" encoding="UTF-8"?>
@@ -195,7 +202,7 @@ thumbnail = """
 
 placemark = """<!-- add placemarks -->
 <Placemark>
-    <name></name>
+    <name>%(date)s</name>
     <description>
         <![CDATA[
             %(description)s
@@ -221,7 +228,7 @@ placemark = """<!-- add placemarks -->
 """
 placemark_mov = """<!-- add placemarks -->
 <Placemark>
-    <name>%(filename)s</name>
+    <name>%(date)s</name>
     <description>
         <![CDATA[
             %(description)s
@@ -242,7 +249,7 @@ placemark_mov = """<!-- add placemarks -->
         <range>2805632.763722554</range>
         <gx:altitudeMode>relativeToSeaFloor</gx:altitudeMode>
     </LookAt>
-    <styleUrl>#msn_icon_img</styleUrl>
+    <styleUrl>#msn_icon</styleUrl>
     <Point>
         <gx:drawOrder>1</gx:drawOrder>
         <coordinates>%(longitude)f,%(latitude)f,0</coordinates>
@@ -252,6 +259,7 @@ placemark_mov = """<!-- add placemarks -->
 footer = """</Document>
 </kml>
 """
+# finding all files in directory NOT RECURSIVE, check out this for files within subdirs: https://stackoverflow.com/questions/10377998/how-can-i-iterate-over-files-in-a-given-directory
 
 # python photo_locator.py 'directory'
 if len(sys.argv) > 1:
@@ -271,16 +279,19 @@ f.write(header)
 
 for file in os.listdir(directory_in_bytes):
      filename = os.fsdecode(file)
-     if filename.lower().endswith(".jpg") or filename.lower().endswith(".mov"): #NO MOV SUPPORT YET
-         latitude,longitude = get_coordinates(directory,filename,exiftool)
+     if filename.lower().endswith(".jpg") or filename.lower().endswith(".mov"):
+         coord_dict= get_coordinates(directory,filename,exiftool)
+         latitude = coord_dict['coords'][0]
+         longitude = coord_dict['coords'][1]
          if ((latitude == 0) and (longitude == 0)):
              continue
          image_data = {
              'filename': filename,
              'description': '', #if there is a description use </br> at end
-             'directory': directory,
+             'directory': os.path.dirname(os.path.realpath(filename)),
              'longitude': longitude,
-             'latitude': latitude
+             'latitude': latitude,
+             'date':coord_dict['date']
          }
          # print("writing xml data for %s", filename)
          if (filename.lower().endswith(".mov")):
